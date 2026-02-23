@@ -92,28 +92,21 @@
         <div class="pdf-scanner">
             <label>📄 Upload Clinical Chart / PDF (Optional AI Scan)</label>
             <input type="file" id="pdf-upload" accept=".pdf,.txt" style="margin-top:10px;">
-            <p style="font-size: 0.8rem; margin-top: 5px;">AI will scan for: DNR, Sepsis, Insulin, Suicide, NPO, etc.</p>
+            <p style="font-size: 0.8rem; margin-top: 5px;">AI scans for: DNR, Sepsis, Insulin, Suicide, NPO, etc.</p>
         </div>
         <div class="form-group">
-            <label>Handoff Notes (Nurse 1)</label>
+            <label>Handoff Notes (Outgoing Nurse)</label>
             <textarea id="p-notes" rows="4" placeholder="Mention critical updates..."></textarea>
         </div>
         <button class="btn" onclick="saveNewCase()">💾 Initialize Case</button>
     </div>
 
     <div id="dashboard" class="card section">
-        <div class="nav-header">
-            <h2>📋 Patient Records</h2>
-            <button class="back-home-btn" onclick="showSection('home')">🏠 Back Home</button>
-        </div>
+        <div class="nav-header"><h2>📋 Patient Records</h2><button class="back-home-btn" onclick="showSection('home')">🏠 Home</button></div>
         <div id="dashboard-list"></div>
     </div>
-
     <div id="incoming" class="card section">
-        <div class="nav-header">
-            <h2>📥 Pending Verifications</h2>
-            <button class="back-home-btn" onclick="showSection('home')">🏠 Back Home</button>
-        </div>
+        <div class="nav-header"><h2>📥 Pending Verifications</h2><button class="back-home-btn" onclick="showSection('home')">🏠 Home</button></div>
         <div id="incoming-list"></div>
     </div>
 
@@ -131,6 +124,8 @@
             <button class="tab-btn" onclick="switchTab('t-vitals')">2. Vitals</button>
             <button class="tab-btn" onclick="switchTab('t-labs')">3. Labs</button>
             <button class="tab-btn" onclick="switchTab('t-meds')">4. Meds</button>
+            <button class="tab-btn" onclick="switchTab('t-allergies')">5. Allergies</button>
+            <button class="tab-btn" onclick="switchTab('t-notes')">6. Notes</button>
             <button class="tab-btn" onclick="switchTab('t-risk')">7. Anchors</button>
             <button class="tab-btn" onclick="switchTab('t-plan')">8. Plan</button>
         </div>
@@ -139,11 +134,13 @@
         <div id="t-vitals" class="tab-content"><div class="form-grid"><div class="form-group"><label>SpO2 (%)</label><input type="number" id="v-spo2"></div><div class="form-group"><label>HR (bpm)</label><input type="number" id="v-hr"></div><div class="form-group"><label>BP</label><input type="text" id="v-bp"></div></div></div>
         <div id="t-labs" class="tab-content"><table id="lab-table"><tr><th>Test</th><th>Status</th><th>Action</th></tr></table><button onclick="addRow('lab-table')">➕ Add Lab</button></div>
         <div id="t-meds" class="tab-content"><table id="med-table"><tr><th>Medication</th><th>Status</th><th>Action</th></tr></table><button onclick="addRow('med-table')">➕ Add Med</button></div>
+        
+        <div id="t-allergies" class="tab-content"><label>Allergy Profile</label><textarea id="d-allergies" rows="3" placeholder="List confirmed allergies..."></textarea></div>
+        <div id="t-notes" class="tab-content"><label>Original Handoff History</label><div id="d-notes-display" style="padding:15px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; min-height:100px;"></div></div>
 
         <div id="t-risk" class="tab-content">
             <p style="margin-bottom:10px; font-weight:bold; color: #1e3a8a;">🛡️ 20-Point Clinical Safety Verification</p>
-            <input type="text" id="anchor-search" placeholder="🔍 Search anchors (e.g. 'sugar', 'dialysis')..." 
-                   style="border: 2px solid #3b82f6; padding: 10px; margin-bottom:15px;" onkeyup="filterAnchors()">
+            <input type="text" id="anchor-search" placeholder="🔍 Search anchors..." style="border: 2px solid #3b82f6; padding: 10px; margin-bottom:15px;" onkeyup="filterAnchors()">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
@@ -169,21 +166,19 @@
                 <div>
                     <p style="font-size: 0.8rem; color: #10b981; font-weight: bold;">METABOLIC / RENAL</p>
                     <div class="checkbox-grid" style="grid-template-columns: 1fr;">
-                        <label class="check-box"><input type="checkbox" id="a-diabetic"> Diabetic (IDDM/NIDDM)</label>
+                        <label class="check-box"><input type="checkbox" id="a-diabetic"> Diabetic (Insulin)</label>
                         <label class="check-box"><input type="checkbox" id="a-renal"> Renal Failure / Dialysis</label>
                         <label class="check-box"><input type="checkbox" id="a-liver"> Hepatic Impairment</label>
-                        <label class="check-box"><input type="checkbox" id="a-electrolyte"> Electrolyte Imbalance</label>
                         <label class="check-box"><input type="checkbox" id="a-npo"> NPO Status</label>
                     </div>
                 </div>
                 <div>
-                    <p style="font-size: 0.8rem; color: #f59e0b; font-weight: bold;">INFECTION & SURGICAL</p>
+                    <p style="font-size: 0.8rem; color: #f59e0b; font-weight: bold;">INFECTION</p>
                     <div class="checkbox-grid" style="grid-template-columns: 1fr;">
                         <label class="check-box"><input type="checkbox" id="a-iso"> Isolation Precautions</label>
                         <label class="check-box"><input type="checkbox" id="a-immuno"> Immunocompromised</label>
                         <label class="check-box"><input type="checkbox" id="a-post"> Post-Op (< 24hr)</label>
                         <label class="check-box"><input type="checkbox" id="a-mrsa"> MRSA / MDRO</label>
-                        <label class="check-box"><input type="checkbox" id="a-wound"> Stage 3+ Wound</label>
                     </div>
                 </div>
             </div>
@@ -191,9 +186,9 @@
 
         <div id="t-plan" class="tab-content"><textarea id="d-plan" rows="5" placeholder="Document 24hr Care Plan..."></textarea></div>
 
-        <div id="ai-output" style="display:none; margin-top:30px; padding:20px; border-radius:20px; background:#fff; border: 1px solid #ddd;">
+        <div id="ai-output" style="display:none; margin-top:30px; padding:20px; border-radius:20px; background:#fff; border: 1px solid #ddd; text-align:center;">
             <div id="risk-circle" class="risk-circle"><span id="risk-text" style="font-size:1.8rem">LOW</span></div>
-            <div id="risk-reasons" style="padding:10px;"></div>
+            <div id="risk-reasons" style="text-align:left; padding:10px; max-width:600px; margin: 0 auto;"></div>
         </div>
     </div>
 </div>
@@ -202,14 +197,14 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
+    // CORE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyDuyzmkUgxn3d1mZcIt3Ik6XSjz2pPcH20",
         authDomain: "brokenhandoffai.firebaseapp.com",
         projectId: "brokenhandoffai",
         storageBucket: "brokenhandoffai.firebasestorage.app",
         messagingSenderId: "877155578407",
-        appId: "1:877155578407:web:ff3c4e64644ad611e15402",
-        measurementId: "G-10CY4NSLHH"
+        appId: "1:877155578407:web:ff3c4e64644ad611e15402"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -218,14 +213,12 @@
 
     let allCases = [];
     let activeId = null;
-    const anchorIds = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno','allergy','suicide','copd','afib','chest','liver','electrolyte','npo','mrsa','wound'];
+    const anchorIds = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno','allergy','suicide','copd','afib','chest','liver','npo','mrsa'];
 
-    // Global Nav Functions
+    // UI Logic
     window.showSection = (id) => {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'dashboard') renderDashboard();
-        if(id === 'incoming') renderIncoming();
     };
 
     window.switchTab = (id) => {
@@ -235,7 +228,7 @@
         document.getElementById(id).classList.add('active');
     };
 
-    // Real-time Cloud Sync
+    // Firebase Sync
     const q = query(casesCol, orderBy("timestamp", "desc"));
     onSnapshot(q, (snapshot) => {
         allCases = [];
@@ -251,26 +244,16 @@
         if(!name) return alert("Patient Name Required");
 
         let pdfFound = [];
-        const fileInput = document.getElementById('pdf-upload');
-        const checkText = (name + " " + notes + (fileInput.files[0]?.name || "")).toLowerCase();
+        const checkText = (name + " " + notes).toLowerCase();
+        const keywords = {'dnr':'DNR','sepsis':'SEPSIS','vent':'VENT','sugar':'DIABETIC','insulin':'DIABETIC','fall':'FALL'};
+        
+        Object.keys(keywords).forEach(k => { if(checkText.includes(k)) pdfFound.push(keywords[k]); });
 
-        const medicalKeywords = {
-            'dnr': 'DNR', 'sepsis': 'SEPSIS', 'vent': 'VENTILATOR', 'sugar': 'DIABETIC', 
-            'insulin': 'DIABETIC', 'kidney': 'RENAL', 'suicide': 'SELF-HARM', 'npo': 'NPO', 'mrsa': 'MRSA'
-        };
-
-        Object.keys(medicalKeywords).forEach(key => {
-            if(checkText.includes(key)) pdfFound.push(medicalKeywords[key]);
-        });
-
-        const newCase = {
+        await addDoc(casesCol, {
             name, notes, age: document.getElementById('p-age').value, ward: document.getElementById('p-ward').value,
-            timestamp: new Date(), status: 'Pending', vitals: { spo2: '' }, plan: '', anchors: [], 
+            timestamp: new Date(), status: 'Pending', vitals: { spo2: '' }, anchors: [], 
             pdfKeywords: pdfFound, riskLevel: 'Not Analyzed', reasons: []
-        };
-
-        await addDoc(casesCol, newCase);
-        alert("Case Created & Synced!");
+        });
         showSection('home');
     };
 
@@ -278,8 +261,8 @@
         activeId = id;
         const c = allCases.find(x => x.id === id);
         document.getElementById('detail-title').innerText = "Clinical Chart: " + c.name;
+        document.getElementById('d-notes-display').innerText = c.notes;
         document.getElementById('v-spo2').value = c.vitals?.spo2 || '';
-        document.getElementById('d-plan').value = c.plan || '';
         anchorIds.forEach(a => document.getElementById('a-'+a).checked = (c.anchors || []).includes(a));
         
         if(c.riskLevel !== 'Not Analyzed') showAIResult(c.riskLevel, c.reasons);
@@ -287,65 +270,76 @@
         showSection('detail');
     };
 
+    // BROADER AI SCANNING LOGIC
     window.triggerAI = async function() {
         const c = allCases.find(x => x.id === activeId);
         const spo2 = document.getElementById('v-spo2').value;
-        const plan = document.getElementById('d-plan').value;
         const selectedAnchors = anchorIds.filter(a => document.getElementById('a-'+a).checked);
-
         let reasons = [];
         let score = 0; 
-        const notesLower = c.notes.toLowerCase();
+        const notesLower = (c.notes + " " + (c.pdfKeywords.join(" "))).toLowerCase();
 
-        if(notesLower.includes('diabetic') && !selectedAnchors.includes('diabetic')) { reasons.push("🚨 Data Mismatch: 'Diabetes' in notes but not flagged."); score = 2; }
-        if(notesLower.includes('immuno') && !selectedAnchors.includes('immuno')) { reasons.push("🚨 Safety Gap: 'Immunocompromised' in notes but not flagged."); score = 2; }
-        if(spo2 && parseInt(spo2) < 92) { reasons.push("🚨 High Risk: Critical Hypoxia (<92%)."); score = 2; }
-        
-        c.pdfKeywords.forEach(kw => {
-            if(!selectedAnchors.some(a => a.includes(kw.toLowerCase()))) {
-                reasons.push(`🚨 Clinical Oversight: AI found '${kw}' in PDF but it's not verified.`);
+        // Safety Net Groups
+        const safetyNet = [
+            { id: 'sepsis', keys: ['sepsis','infection','fever','lactate','tachycardia','wbc'], label: 'Sepsis Protocol' },
+            { id: 'diabetic', keys: ['diabetes','insulin','glucose','sugar','metformin'], label: 'Diabetic/Glucose Monitoring' },
+            { id: 'fall', keys: ['fall','unsteady','dizzy','confusion','weakness'], label: 'Fall Precautions' },
+            { id: 'vent', keys: ['vent','intubated','cpap','bipap','respirator'], label: 'Respiratory/Ventilator Support' },
+            { id: 'renal', keys: ['renal','kidney','dialysis','creatinine','bun'], label: 'Renal/Kidney Care' },
+            { id: 'allergy', keys: ['allergy','anaphylaxis','reaction','hives'], label: 'Severe Allergy' }
+        ];
+
+        safetyNet.forEach(group => {
+            const match = group.keys.some(k => notesLower.includes(k));
+            if(match && !selectedAnchors.includes(group.id)) {
+                reasons.push(`🚨 Clinical Oversight: Evidence of **${group.label}** detected in history, but anchor was not verified.`);
                 score = 2;
             }
         });
 
-        const level = score === 2 ? "High" : (score === 1 ? "Moderate" : "Low");
+        if(spo2 && parseInt(spo2) < 92) { reasons.push("🚨 High Risk: SpO2 < 92% detected without verified respiratory plan."); score = 2; }
+
+        const level = score === 2 ? "High" : "Low";
         await updateDoc(doc(db, "handoffs", activeId), {
             riskLevel: level, reasons: reasons, status: 'Analyzed', 
-            vitals: { spo2: spo2 }, plan: plan, anchors: selectedAnchors
+            vitals: { spo2: spo2 }, anchors: selectedAnchors
         });
         showAIResult(level, reasons);
     };
 
+    function showAIResult(level, reasons) {
+        document.getElementById('ai-output').style.display = 'block';
+        document.getElementById('risk-text').innerText = level.toUpperCase();
+        document.getElementById('risk-circle').className = "risk-circle risk-" + level.toLowerCase();
+        document.getElementById('risk-reasons').innerHTML = reasons.length ? 
+            "<h3>AI Safety Summary:</h3>" + reasons.map(r => `<p style="margin-top:8px;">• ${r}</p>`).join('') : 
+            "✅ Safe Handoff: Incoming nurse verification matches clinical history.";
+    }
+
+    // Helper functions
     function renderDashboard() {
         const list = document.getElementById('dashboard-list');
         if(!list) return;
-        list.innerHTML = allCases.length ? '' : '<p>No records found.</p>';
+        list.innerHTML = '';
         allCases.forEach(c => {
             list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div><strong>${c.name}</strong> - ${c.ward}<br><small>Risk: ${c.riskLevel}</small></div>
-                <button class="back-home-btn" style="background:#3b82f6" onclick="openCase('${c.id}')">Open Chart</button>
+                <div><strong>${c.name}</strong> - Ward: ${c.ward}<br><small>AI Status: ${c.riskLevel}</small></div>
+                <button class="back-home-btn" style="background:#3b82f6" onclick="openCase('${c.id}')">View Chart</button>
             </div>`;
         });
     }
 
     function renderIncoming() {
         const list = document.getElementById('incoming-list');
-        if(!list) return;
         const pending = allCases.filter(c => c.status === 'Pending');
+        if(!list) return;
         list.innerHTML = pending.length ? '' : '<p>All verifications complete.</p>';
         pending.forEach(c => {
             list.innerHTML += `<div class="card" style="border-left: 10px solid #f59e0b">
-                <h3>${c.name}</h3><p>${c.notes}</p>
+                <h3>${c.name}</h3><p style="margin:10px 0;">${c.notes}</p>
                 <button class="btn" onclick="openCase('${c.id}')">Start Verification</button>
             </div>`;
         });
-    }
-
-    function showAIResult(level, reasons) {
-        document.getElementById('ai-output').style.display = 'block';
-        document.getElementById('risk-text').innerText = level.toUpperCase();
-        document.getElementById('risk-circle').className = "risk-circle risk-" + level.toLowerCase();
-        document.getElementById('risk-reasons').innerHTML = reasons.length ? reasons.map(r => `<p>• ${r}</p>`).join('') : "✅ Safe handoff detected.";
     }
 
     function updateStats() {

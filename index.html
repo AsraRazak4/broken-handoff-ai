@@ -345,3 +345,200 @@
 </body>
 
 </html>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+    import { 
+        getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc 
+    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    // 2. Your Firebase Configuration (From your SDK image)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDuyzmkUgxn3d1mZcIt3Ik6XSjz2pPcH20",
+        authDomain: "brokenhandoffai.firebaseapp.com",
+        projectId: "brokenhandoffai",
+        storageBucket: "brokenhandoffai.firebasestorage.app",
+        messagingSenderId: "877155578407",
+        appId: "1:877155578407:web:ff3c4e64644ad611e15402",
+        measurementId: "G-10CY4NSLHH"
+    };
+
+    // 3. Initialize Firebase & Firestore
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+    const casesCol = collection(db, "handoffs");
+
+    let cases = [];
+    let activeId = null;
+
+    // --- NAVIGATION LOGIC ---
+    window.showSection = function(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'home') updateStats();
+    }
+
+    window.switchTab = function(id) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(id).classList.add('active');
+    }
+
+    // --- CLOUD DATA LOGIC ---
+
+    // Listener: Automatically updates your dashboard when data changes in the cloud
+    const q = query(casesCol, orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+        cases = [];
+        snapshot.forEach((doc) => {
+            cases.push({ id: doc.id, ...doc.data() });
+        });
+        renderDashboard();
+        renderIncoming();
+        updateStats();
+    });
+
+    // Save to Cloud (Replaces localStorage.setItem)
+    window.saveNewCase = async function() {
+        const name = document.getElementById('p-name').value;
+        const notes = document.getElementById('p-notes').value;
+        if(!name) return alert("Patient Name Required");
+
+        let pdfFound = [];
+        const fileInput = document.getElementById('pdf-upload');
+        if(fileInput.files.length > 0) {
+            const fileName = fileInput.files[0].name.toLowerCase();
+            const checkText = (name + " " + notes + " " + fileName).toLowerCase();
+            if(checkText.includes('dnr')) pdfFound.push('DNR');
+            if(checkText.includes('stop') || checkText.includes('discontinue')) pdfFound.push('STOP');
+            if(checkText.includes('sepsis')) pdfFound.push('SEPSIS');
+            if(checkText.includes('vent')) pdfFound.push('VENTILATOR');
+        }
+
+        const newCase = {
+            name, notes,
+            timestamp: new Date(),
+            age: document.getElementById('p-age').value,
+            ward: document.getElementById('p-ward').value,
+            vitals: { spo2: '', hr: '', bp: '' },
+            anchors: [],
+            pdfKeywords: pdfFound,
+            plan: '', riskLevel: 'Not Analyzed', reasons: [], status: 'Pending'
+        };
+
+        try {
+            await addDoc(casesCol, newCase);
+            alert("Cloud Sync Successful: Case stored in Firestore!");
+            showSection('home');
+        } catch (e) {
+            console.error("Error adding document: ", e);
+        }
+    }
+
+    window.renderDashboard = function() {
+        const list = document.getElementById('dashboard-list');
+        if(!list) return;
+        list.innerHTML = cases.length ? '' : '<p>No records found.</p>';
+        cases.forEach(c => {
+            list.innerHTML += `
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center; border:1px solid #ddd">
+                    <div><strong>${c.name}</strong> - Ward: ${c.ward} <br><small>Risk: ${c.riskLevel}</small></div>
+                    <button class="back-home-btn" style="background:#3b82f6" onclick="openCase('${c.id}')">Open Chart</button>
+                </div>`;
+        });
+    }
+
+    window.renderIncoming = function() {
+        const list = document.getElementById('incoming-list');
+        if(!list) return;
+        const pending = cases.filter(c => c.status === 'Pending');
+        list.innerHTML = pending.length ? '' : '<p>All verifications complete.</p>';
+        pending.forEach(c => {
+            list.innerHTML += `
+                <div class="card" style="border-left: 10px solid #f59e0b">
+                    <h3>${c.name}</h3><p>Shift Notes: ${c.notes}</p>
+                    <button class="btn" onclick="openCase('${c.id}')" style="margin-top:10px">Start Handoff Verification</button>
+                </div>`;
+        });
+    }
+
+    window.openCase = function(id) {
+        activeId = id;
+        const c = cases.find(x => x.id === id);
+        document.getElementById('detail-title').innerText = "Clinical Chart: " + c.name;
+        document.getElementById('v-spo2').value = c.vitals.spo2;
+        document.getElementById('d-plan').value = c.plan;
+        
+        const anchorIds = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno'];
+        anchorIds.forEach(a => document.getElementById('a-'+a).checked = c.anchors.includes(a));
+
+        if(c.riskLevel !== 'Not Analyzed') showAIResult(c.riskLevel, c.reasons);
+        else document.getElementById('ai-output').style.display = 'none';
+
+        showSection('detail');
+    }
+
+    window.triggerAI = async function() {
+        const c = cases.find(x => x.id === activeId);
+        const spo2 = document.getElementById('v-spo2').value;
+        const plan = document.getElementById('d-plan').value;
+        const anchors = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno'].filter(a => document.getElementById('a-'+a).checked);
+
+        let reasons = [];
+        let score = 0; 
+
+        if(c.pdfKeywords.includes('STOP')) {
+            reasons.push("🚨 PDF Scan alert: Document mentions 'STOP/DISCONTINUE'. Ensure meds list is updated.");
+            score = 2;
+        }
+        if(c.pdfKeywords.includes('DNR') && !anchors.includes('dnr')) {
+            reasons.push("🚨 Safety Gap: 'DNR' detected in PDF Chart but NOT flagged in active anchors.");
+            score = 2;
+        }
+        if(spo2 && parseInt(spo2) < 92) {
+            reasons.push("🚨 High Risk: Patient SpO2 is below 92% (Critical Hypoxia).");
+            score = 2;
+        }
+        if(anchors.includes('sepsis') && plan.length < 10) {
+            reasons.push("⚠️ Care Gap: Sepsis flagged without a stabilization care plan.");
+            if(score < 1) score = 1;
+        }
+
+        const level = score === 2 ? "High" : (score === 1 ? "Moderate" : "Low");
+        
+        // Update Cloud Document
+        const docRef = doc(db, "handoffs", activeId);
+        await updateDoc(docRef, {
+            vitals: { spo2: spo2, hr: '', bp: '' },
+            plan: plan,
+            anchors: anchors,
+            riskLevel: level,
+            reasons: reasons,
+            status: "Analyzed"
+        });
+
+        showAIResult(level, reasons);
+    }
+
+    function showAIResult(level, reasons) {
+        document.getElementById('ai-output').style.display = 'block';
+        document.getElementById('risk-text').innerText = level.toUpperCase();
+        document.getElementById('risk-circle').className = "risk-circle risk-" + level.toLowerCase();
+        document.getElementById('risk-reasons').innerHTML = reasons.length ? reasons.map(r => `<p>• ${r}</p>`).join('') : "✅ Safe handoff detected.";
+    }
+
+    window.updateStats = function() {
+        document.getElementById('s-total').innerText = cases.length;
+        document.getElementById('s-high').innerText = cases.filter(c => c.riskLevel === 'High').length;
+    }
+
+    window.addRow = function(id) {
+        const row = document.getElementById(id).insertRow();
+        row.innerHTML = `<td><input type="text"></td><td><select><option>Active</option><option>Stopped</option></select></td><td><button onclick="this.parentElement.parentElement.remove()">🗑️</button></td>`;
+    }
+
+    updateStats();
+</script>
+

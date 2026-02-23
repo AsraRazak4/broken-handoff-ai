@@ -55,7 +55,6 @@
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
 
         .pdf-scanner { background: #fef3c7; border: 2px dashed #f59e0b; padding: 15px; border-radius: 16px; margin-bottom: 20px; text-align: center; }
-        .keyword-badge { background: #ef4444; color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; margin: 2px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -85,19 +84,16 @@
             <h2>📤 New Handoff Entry</h2>
             <button class="back-home-btn" onclick="showSection('home')">🏠 Back Home</button>
         </div>
-        
         <div class="form-grid">
             <div class="form-group"><label>Patient Name</label><input type="text" id="p-name"></div>
             <div class="form-group"><label>Age</label><input type="number" id="p-age"></div>
             <div class="form-group"><label>Ward Location</label><input type="text" id="p-ward"></div>
         </div>
-
         <div class="pdf-scanner">
             <label>📄 Upload Clinical Chart / PDF (Optional AI Scan)</label>
             <input type="file" id="pdf-upload" accept=".pdf,.txt" style="margin-top:10px;">
-            <p style="font-size: 0.8rem; margin-top: 5px;">AI will scan for: DNR, Sepsis, Stop, Discontinue, Ventilator.</p>
+            <p style="font-size: 0.8rem; margin-top: 5px;">AI will scan for: DNR, Sepsis, Insulin, Suicide, NPO, etc.</p>
         </div>
-
         <div class="form-group">
             <label>Handoff Notes (Nurse 1)</label>
             <textarea id="p-notes" rows="4" placeholder="Mention critical updates..."></textarea>
@@ -135,49 +131,61 @@
             <button class="tab-btn" onclick="switchTab('t-vitals')">2. Vitals</button>
             <button class="tab-btn" onclick="switchTab('t-labs')">3. Labs</button>
             <button class="tab-btn" onclick="switchTab('t-meds')">4. Meds</button>
-            <button class="tab-btn" onclick="switchTab('t-allergies')">5. Allergies</button>
-            <button class="tab-btn" onclick="switchTab('t-notes')">6. Notes</button>
             <button class="tab-btn" onclick="switchTab('t-risk')">7. Anchors</button>
             <button class="tab-btn" onclick="switchTab('t-plan')">8. Plan</button>
         </div>
 
         <div id="t-demo" class="tab-content active"><div class="form-grid"><div class="form-group"><label>Sex</label><select id="d-sex"><option>Male</option><option>Female</option></select></div><div class="form-group"><label>Admit Date</label><input type="date" id="d-date"></div></div></div>
-        
-        <div id="t-vitals" class="tab-content">
-            <div class="form-grid">
-                <div class="form-group"><label>SpO2 (%)</label><input type="number" id="v-spo2"></div>
-                <div class="form-group"><label>HR (bpm)</label><input type="number" id="v-hr"></div>
-                <div class="form-group"><label>BP</label><input type="text" id="v-bp"></div>
-            </div>
-        </div>
-
-        <div id="t-labs" class="tab-content">
-            <table id="lab-table"><tr><th>Test</th><th>Status</th><th>Action</th></tr></table>
-            <button onclick="addRow('lab-table')" style="margin-top:10px">➕ Add Lab</button>
-        </div>
-
-        <div id="t-meds" class="tab-content">
-            <table id="med-table"><tr><th>Medication</th><th>Status</th><th>Action</th></tr></table>
-            <button onclick="addRow('med-table')" style="margin-top:10px">➕ Add Medication</button>
-        </div>
-
-        <div id="t-allergies" class="tab-content"><textarea id="d-allergies" rows="3" placeholder="List allergies..."></textarea></div>
-        
-        <div id="t-notes" class="tab-content"><textarea id="d-notes-inc" rows="5" placeholder="Incoming nurse assessment..."></textarea></div>
+        <div id="t-vitals" class="tab-content"><div class="form-grid"><div class="form-group"><label>SpO2 (%)</label><input type="number" id="v-spo2"></div><div class="form-group"><label>HR (bpm)</label><input type="number" id="v-hr"></div><div class="form-group"><label>BP</label><input type="text" id="v-bp"></div></div></div>
+        <div id="t-labs" class="tab-content"><table id="lab-table"><tr><th>Test</th><th>Status</th><th>Action</th></tr></table><button onclick="addRow('lab-table')">➕ Add Lab</button></div>
+        <div id="t-meds" class="tab-content"><table id="med-table"><tr><th>Medication</th><th>Status</th><th>Action</th></tr></table><button onclick="addRow('med-table')">➕ Add Med</button></div>
 
         <div id="t-risk" class="tab-content">
-            <p style="margin-bottom:10px; font-weight:bold;">10 Clinical Safety Anchors:</p>
-            <div class="checkbox-grid">
-                <label class="check-box"><input type="checkbox" id="a-dnr"> DNR</label>
-                <label class="check-box"><input type="checkbox" id="a-sepsis"> Sepsis</label>
-                <label class="check-box"><input type="checkbox" id="a-vent"> Ventilator</label>
-                <label class="check-box"><input type="checkbox" id="a-chf"> CHF</label>
-                <label class="check-box"><input type="checkbox" id="a-fall"> Fall Risk</label>
-                <label class="check-box"><input type="checkbox" id="a-iso"> Isolation</label>
-                <label class="check-box"><input type="checkbox" id="a-post"> Post-Op</label>
-                <label class="check-box"><input type="checkbox" id="a-renal"> Renal Failure</label>
-                <label class="check-box"><input type="checkbox" id="a-diabetic"> Diabetic</label>
-                <label class="check-box"><input type="checkbox" id="a-immuno"> Immunocompromised</label>
+            <p style="margin-bottom:10px; font-weight:bold; color: #1e3a8a;">🛡️ 20-Point Clinical Safety Verification</p>
+            <input type="text" id="anchor-search" placeholder="🔍 Search anchors (e.g. 'sugar', 'dialysis')..." 
+                   style="border: 2px solid #3b82f6; padding: 10px; margin-bottom:15px;" onkeyup="filterAnchors()">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <p style="font-size: 0.8rem; color: #ef4444; font-weight: bold;">CRITICAL ALERTS</p>
+                    <div class="checkbox-grid" style="grid-template-columns: 1fr;">
+                        <label class="check-box"><input type="checkbox" id="a-dnr"> DNR / DNI</label>
+                        <label class="check-box"><input type="checkbox" id="a-sepsis"> Sepsis Protocol</label>
+                        <label class="check-box"><input type="checkbox" id="a-fall"> High Fall Risk</label>
+                        <label class="check-box"><input type="checkbox" id="a-allergy"> Severe Allergy</label>
+                        <label class="check-box"><input type="checkbox" id="a-suicide"> Self-Harm Risk</label>
+                    </div>
+                </div>
+                <div>
+                    <p style="font-size: 0.8rem; color: #3b82f6; font-weight: bold;">RESPIRATORY / CARDIAC</p>
+                    <div class="checkbox-grid" style="grid-template-columns: 1fr;">
+                        <label class="check-box"><input type="checkbox" id="a-vent"> Ventilator / CPAP</label>
+                        <label class="check-box"><input type="checkbox" id="a-chf"> CHF / Edema</label>
+                        <label class="check-box"><input type="checkbox" id="a-copd"> COPD / Asthma</label>
+                        <label class="check-box"><input type="checkbox" id="a-afib"> AFib / Arrhythmia</label>
+                        <label class="check-box"><input type="checkbox" id="a-chest"> Chest Pain (ACS)</label>
+                    </div>
+                </div>
+                <div>
+                    <p style="font-size: 0.8rem; color: #10b981; font-weight: bold;">METABOLIC / RENAL</p>
+                    <div class="checkbox-grid" style="grid-template-columns: 1fr;">
+                        <label class="check-box"><input type="checkbox" id="a-diabetic"> Diabetic (IDDM/NIDDM)</label>
+                        <label class="check-box"><input type="checkbox" id="a-renal"> Renal Failure / Dialysis</label>
+                        <label class="check-box"><input type="checkbox" id="a-liver"> Hepatic Impairment</label>
+                        <label class="check-box"><input type="checkbox" id="a-electrolyte"> Electrolyte Imbalance</label>
+                        <label class="check-box"><input type="checkbox" id="a-npo"> NPO Status</label>
+                    </div>
+                </div>
+                <div>
+                    <p style="font-size: 0.8rem; color: #f59e0b; font-weight: bold;">INFECTION & SURGICAL</p>
+                    <div class="checkbox-grid" style="grid-template-columns: 1fr;">
+                        <label class="check-box"><input type="checkbox" id="a-iso"> Isolation Precautions</label>
+                        <label class="check-box"><input type="checkbox" id="a-immuno"> Immunocompromised</label>
+                        <label class="check-box"><input type="checkbox" id="a-post"> Post-Op (< 24hr)</label>
+                        <label class="check-box"><input type="checkbox" id="a-mrsa"> MRSA / MDRO</label>
+                        <label class="check-box"><input type="checkbox" id="a-wound"> Stage 3+ Wound</label>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -190,169 +198,10 @@
     </div>
 </div>
 
-<script>
-    let cases = JSON.parse(localStorage.getItem('hosp_v4')) || [];
-    let activeId = null;
-
-    function showSection(id) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if(id === 'dashboard') renderDashboard();
-        if(id === 'incoming') renderIncoming();
-        if(id === 'home') updateStats();
-    }
-
-    function switchTab(id) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        event.target.classList.add('active');
-        document.getElementById(id).classList.add('active');
-    }
-
-    async function saveNewCase() {
-        const name = document.getElementById('p-name').value;
-        const notes = document.getElementById('p-notes').value;
-        if(!name) return alert("Patient Name Required");
-
-        // Simple PDF Mock Extraction Logic
-        let pdfFound = [];
-        const fileInput = document.getElementById('pdf-upload');
-        if(fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name.toLowerCase();
-            // Simulating AI OCR scan on keywords
-            const checkText = (name + " " + notes + " " + fileName).toLowerCase();
-            if(checkText.includes('dnr')) pdfFound.push('DNR');
-            if(checkText.includes('stop') || checkText.includes('discontinue')) pdfFound.push('STOP');
-            if(checkText.includes('sepsis')) pdfFound.push('SEPSIS');
-            if(checkText.includes('vent')) pdfFound.push('VENTILATOR');
-        }
-
-        const newCase = {
-            id: Date.now(),
-            name, notes, 
-            age: document.getElementById('p-age').value,
-            ward: document.getElementById('p-ward').value,
-            vitals: { spo2: '', hr: '', bp: '' },
-            anchors: [],
-            pdfKeywords: pdfFound,
-            plan: '', riskLevel: 'Not Analyzed', reasons: [], status: 'Pending'
-        };
-
-        cases.push(newCase);
-        localStorage.setItem('hosp_v4', JSON.stringify(cases));
-        alert("Case Created! AI scanned keywords: " + (pdfFound.join(', ') || 'None'));
-        showSection('home');
-    }
-
-    function renderDashboard() {
-        const list = document.getElementById('dashboard-list');
-        list.innerHTML = cases.length ? '' : '<p>No records found.</p>';
-        cases.forEach(c => {
-            list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; border:1px solid #ddd">
-                <div><strong>${c.name}</strong> - Ward: ${c.ward} <br><small>Risk: ${c.riskLevel}</small></div>
-                <button class="back-home-btn" style="background:#3b82f6" onclick="openCase(${c.id})">Open Chart</button>
-            </div>`;
-        });
-    }
-
-    function renderIncoming() {
-        const list = document.getElementById('incoming-list');
-        const pending = cases.filter(c => c.status === 'Pending');
-        list.innerHTML = pending.length ? '' : '<p>All verifications complete.</p>';
-        pending.forEach(c => {
-            list.innerHTML += `<div class="card" style="border-left: 10px solid #f59e0b">
-                <h3>${c.name}</h3><p>Shift Notes: ${c.notes}</p>
-                <button class="btn" onclick="openCase(${c.id})" style="margin-top:10px">Start Handoff Verification</button>
-            </div>`;
-        });
-    }
-
-    function openCase(id) {
-        activeId = id;
-        const c = cases.find(x => x.id === id);
-        document.getElementById('detail-title').innerText = "Clinical Chart: " + c.name;
-        document.getElementById('v-spo2').value = c.vitals.spo2;
-        document.getElementById('d-plan').value = c.plan;
-        
-        // Load Anchors
-        const anchorIds = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno'];
-        anchorIds.forEach(a => document.getElementById('a-'+a).checked = c.anchors.includes(a));
-
-        if(c.riskLevel !== 'Not Analyzed') showAIResult(c.riskLevel, c.reasons);
-        else document.getElementById('ai-output').style.display = 'none';
-
-        showSection('detail');
-    }
-
-    function triggerAI() {
-        const c = cases.find(x => x.id === activeId);
-        c.vitals.spo2 = document.getElementById('v-spo2').value;
-        c.plan = document.getElementById('d-plan').value;
-        c.anchors = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno'].filter(a => document.getElementById('a-'+a).checked);
-
-        let reasons = [];
-        let score = 0; // 0:Low, 1:Mod, 2:High
-
-        // AI Logic 1: PDF "STOP" vs Medication
-        if(c.pdfKeywords.includes('STOP')) {
-            reasons.push("🚨 PDF Scan alert: Document mentions 'STOP/DISCONTINUE'. Ensure meds list is updated.");
-            score = 2;
-        }
-
-        // AI Logic 2: DNR Mismatch
-        if(c.pdfKeywords.includes('DNR') && !c.anchors.includes('dnr')) {
-            reasons.push("🚨 Safety Gap: 'DNR' detected in PDF Chart but NOT flagged in active anchors.");
-            score = 2;
-        }
-
-        // AI Logic 3: Clinical Critical (Hypoxia)
-        if(c.vitals.spo2 && parseInt(c.vitals.spo2) < 92) {
-            reasons.push("🚨 High Risk: Patient SpO2 is below 92% (Critical Hypoxia).");
-            score = 2;
-        }
-
-        // AI Logic 4: Sepsis Protocol
-        if(c.anchors.includes('sepsis') && c.plan.length < 10) {
-            reasons.push("⚠️ Care Gap: Sepsis flagged without a stabilization care plan.");
-            if(score < 1) score = 1;
-        }
-
-        const level = score === 2 ? "High" : (score === 1 ? "Moderate" : "Low");
-        c.riskLevel = level; c.reasons = reasons; c.status = "Analyzed";
-        localStorage.setItem('hosp_v4', JSON.stringify(cases));
-        showAIResult(level, reasons);
-    }
-
-    function showAIResult(level, reasons) {
-        document.getElementById('ai-output').style.display = 'block';
-        document.getElementById('risk-text').innerText = level.toUpperCase();
-        document.getElementById('risk-circle').className = "risk-circle risk-" + level.toLowerCase();
-        document.getElementById('risk-reasons').innerHTML = reasons.length ? reasons.map(r => `<p>• ${r}</p>`).join('') : "✅ Safe handoff detected.";
-    }
-
-    function updateStats() {
-        document.getElementById('s-total').innerText = cases.length;
-        document.getElementById('s-high').innerText = cases.filter(c => c.riskLevel === 'High').length;
-    }
-
-    function addRow(id) {
-        const row = document.getElementById(id).insertRow();
-        row.innerHTML = `<td><input type="text"></td><td><select><option>Active</option><option>Stopped</option></select></td><td><button onclick="this.parentElement.parentElement.remove()">🗑️</button></td>`;
-    }
-
-    updateStats();
-</script>
-</body>
-
-</html>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
-    import { 
-        getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc 
-    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-    // 2. Your Firebase Configuration (From your SDK image)
     const firebaseConfig = {
         apiKey: "AIzaSyDuyzmkUgxn3d1mZcIt3Ik6XSjz2pPcH20",
         authDomain: "brokenhandoffai.firebaseapp.com",
@@ -363,44 +212,39 @@
         measurementId: "G-10CY4NSLHH"
     };
 
-    // 3. Initialize Firebase & Firestore
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getFirestore(app);
     const casesCol = collection(db, "handoffs");
 
-    let cases = [];
+    let allCases = [];
     let activeId = null;
+    const anchorIds = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno','allergy','suicide','copd','afib','chest','liver','electrolyte','npo','mrsa','wound'];
 
-    // --- NAVIGATION LOGIC ---
-    window.showSection = function(id) {
+    // Global Nav Functions
+    window.showSection = (id) => {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'home') updateStats();
-    }
+        if(id === 'dashboard') renderDashboard();
+        if(id === 'incoming') renderIncoming();
+    };
 
-    window.switchTab = function(id) {
+    window.switchTab = (id) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         event.target.classList.add('active');
         document.getElementById(id).classList.add('active');
-    }
+    };
 
-    // --- CLOUD DATA LOGIC ---
-
-    // Listener: Automatically updates your dashboard when data changes in the cloud
+    // Real-time Cloud Sync
     const q = query(casesCol, orderBy("timestamp", "desc"));
     onSnapshot(q, (snapshot) => {
-        cases = [];
-        snapshot.forEach((doc) => {
-            cases.push({ id: doc.id, ...doc.data() });
-        });
+        allCases = [];
+        snapshot.forEach((doc) => allCases.push({ id: doc.id, ...doc.data() }));
+        updateStats();
         renderDashboard();
         renderIncoming();
-        updateStats();
     });
 
-    // Save to Cloud (Replaces localStorage.setItem)
     window.saveNewCase = async function() {
         const name = document.getElementById('p-name').value;
         const notes = document.getElementById('p-notes').value;
@@ -408,118 +252,93 @@
 
         let pdfFound = [];
         const fileInput = document.getElementById('pdf-upload');
-        if(fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name.toLowerCase();
-            const checkText = (name + " " + notes + " " + fileName).toLowerCase();
-            if(checkText.includes('dnr')) pdfFound.push('DNR');
-            if(checkText.includes('stop') || checkText.includes('discontinue')) pdfFound.push('STOP');
-            if(checkText.includes('sepsis')) pdfFound.push('SEPSIS');
-            if(checkText.includes('vent')) pdfFound.push('VENTILATOR');
-        }
+        const checkText = (name + " " + notes + (fileInput.files[0]?.name || "")).toLowerCase();
 
-        const newCase = {
-            name, notes,
-            timestamp: new Date(),
-            age: document.getElementById('p-age').value,
-            ward: document.getElementById('p-ward').value,
-            vitals: { spo2: '', hr: '', bp: '' },
-            anchors: [],
-            pdfKeywords: pdfFound,
-            plan: '', riskLevel: 'Not Analyzed', reasons: [], status: 'Pending'
+        const medicalKeywords = {
+            'dnr': 'DNR', 'sepsis': 'SEPSIS', 'vent': 'VENTILATOR', 'sugar': 'DIABETIC', 
+            'insulin': 'DIABETIC', 'kidney': 'RENAL', 'suicide': 'SELF-HARM', 'npo': 'NPO', 'mrsa': 'MRSA'
         };
 
-        try {
-            await addDoc(casesCol, newCase);
-            alert("Cloud Sync Successful: Case stored in Firestore!");
-            showSection('home');
-        } catch (e) {
-            console.error("Error adding document: ", e);
-        }
-    }
-
-    window.renderDashboard = function() {
-        const list = document.getElementById('dashboard-list');
-        if(!list) return;
-        list.innerHTML = cases.length ? '' : '<p>No records found.</p>';
-        cases.forEach(c => {
-            list.innerHTML += `
-                <div class="card" style="display:flex; justify-content:space-between; align-items:center; border:1px solid #ddd">
-                    <div><strong>${c.name}</strong> - Ward: ${c.ward} <br><small>Risk: ${c.riskLevel}</small></div>
-                    <button class="back-home-btn" style="background:#3b82f6" onclick="openCase('${c.id}')">Open Chart</button>
-                </div>`;
+        Object.keys(medicalKeywords).forEach(key => {
+            if(checkText.includes(key)) pdfFound.push(medicalKeywords[key]);
         });
-    }
 
-    window.renderIncoming = function() {
-        const list = document.getElementById('incoming-list');
-        if(!list) return;
-        const pending = cases.filter(c => c.status === 'Pending');
-        list.innerHTML = pending.length ? '' : '<p>All verifications complete.</p>';
-        pending.forEach(c => {
-            list.innerHTML += `
-                <div class="card" style="border-left: 10px solid #f59e0b">
-                    <h3>${c.name}</h3><p>Shift Notes: ${c.notes}</p>
-                    <button class="btn" onclick="openCase('${c.id}')" style="margin-top:10px">Start Handoff Verification</button>
-                </div>`;
-        });
-    }
+        const newCase = {
+            name, notes, age: document.getElementById('p-age').value, ward: document.getElementById('p-ward').value,
+            timestamp: new Date(), status: 'Pending', vitals: { spo2: '' }, plan: '', anchors: [], 
+            pdfKeywords: pdfFound, riskLevel: 'Not Analyzed', reasons: []
+        };
 
-    window.openCase = function(id) {
+        await addDoc(casesCol, newCase);
+        alert("Case Created & Synced!");
+        showSection('home');
+    };
+
+    window.openCase = (id) => {
         activeId = id;
-        const c = cases.find(x => x.id === id);
+        const c = allCases.find(x => x.id === id);
         document.getElementById('detail-title').innerText = "Clinical Chart: " + c.name;
-        document.getElementById('v-spo2').value = c.vitals.spo2;
-        document.getElementById('d-plan').value = c.plan;
+        document.getElementById('v-spo2').value = c.vitals?.spo2 || '';
+        document.getElementById('d-plan').value = c.plan || '';
+        anchorIds.forEach(a => document.getElementById('a-'+a).checked = (c.anchors || []).includes(a));
         
-        const anchorIds = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno'];
-        anchorIds.forEach(a => document.getElementById('a-'+a).checked = c.anchors.includes(a));
-
         if(c.riskLevel !== 'Not Analyzed') showAIResult(c.riskLevel, c.reasons);
         else document.getElementById('ai-output').style.display = 'none';
-
         showSection('detail');
-    }
+    };
 
     window.triggerAI = async function() {
-        const c = cases.find(x => x.id === activeId);
+        const c = allCases.find(x => x.id === activeId);
         const spo2 = document.getElementById('v-spo2').value;
         const plan = document.getElementById('d-plan').value;
-        const anchors = ['dnr','sepsis','vent','chf','fall','iso','post','renal','diabetic','immuno'].filter(a => document.getElementById('a-'+a).checked);
+        const selectedAnchors = anchorIds.filter(a => document.getElementById('a-'+a).checked);
 
         let reasons = [];
         let score = 0; 
+        const notesLower = c.notes.toLowerCase();
 
-        if(c.pdfKeywords.includes('STOP')) {
-            reasons.push("🚨 PDF Scan alert: Document mentions 'STOP/DISCONTINUE'. Ensure meds list is updated.");
-            score = 2;
-        }
-        if(c.pdfKeywords.includes('DNR') && !anchors.includes('dnr')) {
-            reasons.push("🚨 Safety Gap: 'DNR' detected in PDF Chart but NOT flagged in active anchors.");
-            score = 2;
-        }
-        if(spo2 && parseInt(spo2) < 92) {
-            reasons.push("🚨 High Risk: Patient SpO2 is below 92% (Critical Hypoxia).");
-            score = 2;
-        }
-        if(anchors.includes('sepsis') && plan.length < 10) {
-            reasons.push("⚠️ Care Gap: Sepsis flagged without a stabilization care plan.");
-            if(score < 1) score = 1;
-        }
-
-        const level = score === 2 ? "High" : (score === 1 ? "Moderate" : "Low");
+        if(notesLower.includes('diabetic') && !selectedAnchors.includes('diabetic')) { reasons.push("🚨 Data Mismatch: 'Diabetes' in notes but not flagged."); score = 2; }
+        if(notesLower.includes('immuno') && !selectedAnchors.includes('immuno')) { reasons.push("🚨 Safety Gap: 'Immunocompromised' in notes but not flagged."); score = 2; }
+        if(spo2 && parseInt(spo2) < 92) { reasons.push("🚨 High Risk: Critical Hypoxia (<92%)."); score = 2; }
         
-        // Update Cloud Document
-        const docRef = doc(db, "handoffs", activeId);
-        await updateDoc(docRef, {
-            vitals: { spo2: spo2, hr: '', bp: '' },
-            plan: plan,
-            anchors: anchors,
-            riskLevel: level,
-            reasons: reasons,
-            status: "Analyzed"
+        c.pdfKeywords.forEach(kw => {
+            if(!selectedAnchors.some(a => a.includes(kw.toLowerCase()))) {
+                reasons.push(`🚨 Clinical Oversight: AI found '${kw}' in PDF but it's not verified.`);
+                score = 2;
+            }
         });
 
+        const level = score === 2 ? "High" : (score === 1 ? "Moderate" : "Low");
+        await updateDoc(doc(db, "handoffs", activeId), {
+            riskLevel: level, reasons: reasons, status: 'Analyzed', 
+            vitals: { spo2: spo2 }, plan: plan, anchors: selectedAnchors
+        });
         showAIResult(level, reasons);
+    };
+
+    function renderDashboard() {
+        const list = document.getElementById('dashboard-list');
+        if(!list) return;
+        list.innerHTML = allCases.length ? '' : '<p>No records found.</p>';
+        allCases.forEach(c => {
+            list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>${c.name}</strong> - ${c.ward}<br><small>Risk: ${c.riskLevel}</small></div>
+                <button class="back-home-btn" style="background:#3b82f6" onclick="openCase('${c.id}')">Open Chart</button>
+            </div>`;
+        });
+    }
+
+    function renderIncoming() {
+        const list = document.getElementById('incoming-list');
+        if(!list) return;
+        const pending = allCases.filter(c => c.status === 'Pending');
+        list.innerHTML = pending.length ? '' : '<p>All verifications complete.</p>';
+        pending.forEach(c => {
+            list.innerHTML += `<div class="card" style="border-left: 10px solid #f59e0b">
+                <h3>${c.name}</h3><p>${c.notes}</p>
+                <button class="btn" onclick="openCase('${c.id}')">Start Verification</button>
+            </div>`;
+        });
     }
 
     function showAIResult(level, reasons) {
@@ -529,16 +348,22 @@
         document.getElementById('risk-reasons').innerHTML = reasons.length ? reasons.map(r => `<p>• ${r}</p>`).join('') : "✅ Safe handoff detected.";
     }
 
-    window.updateStats = function() {
-        document.getElementById('s-total').innerText = cases.length;
-        document.getElementById('s-high').innerText = cases.filter(c => c.riskLevel === 'High').length;
+    function updateStats() {
+        document.getElementById('s-total').innerText = allCases.length;
+        document.getElementById('s-high').innerText = allCases.filter(c => c.riskLevel === 'High').length;
     }
 
-    window.addRow = function(id) {
+    window.filterAnchors = () => {
+        const input = document.getElementById('anchor-search').value.toLowerCase();
+        document.querySelectorAll('.check-box').forEach(cb => {
+            cb.style.display = cb.innerText.toLowerCase().includes(input) ? "flex" : "none";
+        });
+    };
+
+    window.addRow = (id) => {
         const row = document.getElementById(id).insertRow();
         row.innerHTML = `<td><input type="text"></td><td><select><option>Active</option><option>Stopped</option></select></td><td><button onclick="this.parentElement.parentElement.remove()">🗑️</button></td>`;
-    }
-
-    updateStats();
+    };
 </script>
-
+</body>
+</html>

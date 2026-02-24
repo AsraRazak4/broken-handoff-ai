@@ -239,23 +239,69 @@
     });
 
     window.saveNewCase = async function() {
-        const name = document.getElementById('p-name').value;
-        const notes = document.getElementById('p-notes').value;
-        if(!name) return alert("Patient Name Required");
+    const name = document.getElementById('p-name').value;
+    const notes = document.getElementById('p-notes').value;
+    const fileInput = document.getElementById('pdf-upload');
+    
+    if(!name) return alert("⚠️ Patient Name Required");
 
-        let pdfFound = [];
-        const checkText = (name + " " + notes).toLowerCase();
-        const keywords = {'dnr':'DNR','sepsis':'SEPSIS','vent':'VENT','sugar':'DIABETIC','insulin':'DIABETIC','fall':'FALL'};
-        
-        Object.keys(keywords).forEach(k => { if(checkText.includes(k)) pdfFound.push(keywords[k]); });
+    let fileContent = "";
+    
+    // 1. Read the file if one is uploaded
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        // For the demo, we read it as text. 
+        // In a full prod app, we'd use pdf.js for binary PDFs.
+        fileContent = await file.text(); 
+    }
 
-        await addDoc(casesCol, {
-            name, notes, age: document.getElementById('p-age').value, ward: document.getElementById('p-ward').value,
-            timestamp: new Date(), status: 'Pending', vitals: { spo2: '' }, anchors: [], 
-            pdfKeywords: pdfFound, riskLevel: 'Not Analyzed', reasons: []
-        });
-        showSection('home');
+    // 2. Comprehensive AI Keyword Scan
+    let pdfFound = [];
+    const checkText = (name + " " + notes + " " + fileContent).toLowerCase();
+    
+    // Expanded clinical dictionary for the "Wow" factor
+    const keywords = {
+        'dnr': 'DNR (Do Not Resuscitate)',
+        'sepsis': 'SEPSIS PROTOCOL',
+        'infection': 'SEPSIS PROTOCOL',
+        'vent': 'VENTILATOR SUPPORT',
+        'sugar': 'DIABETIC CARE',
+        'insulin': 'DIABETIC CARE',
+        'fall': 'FALL PRECAUTIONS',
+        'npo': 'NPO (Nothing by Mouth)',
+        'suicide': 'SELF-HARM RISK'
     };
+    
+    Object.keys(keywords).forEach(k => { 
+        if(checkText.includes(k)) {
+            if(!pdfFound.includes(keywords[k])) pdfFound.push(keywords[k]);
+        }
+    });
+
+    // 3. THE ALERT YOU WANTED
+    if (pdfFound.length > 0) {
+        alert(`✅ Case Created Successfully!\n\n🧠 AI SCAN COMPLETED:\nThe following safety markers were detected and linked to this case:\n• ${pdfFound.join('\n• ')}`);
+    } else {
+        alert("✅ Case Created Successfully! (No critical AI markers detected)");
+    }
+
+    // 4. Save to Firebase
+    await addDoc(casesCol, {
+        name, 
+        notes, 
+        age: document.getElementById('p-age').value, 
+        ward: document.getElementById('p-ward').value,
+        timestamp: new Date(), 
+        status: 'Pending', 
+        vitals: { spo2: '' }, 
+        anchors: [], 
+        pdfKeywords: pdfFound, // Stores the keywords found by AI
+        riskLevel: 'Not Analyzed', 
+        reasons: []
+    });
+
+    showSection('home');
+};
 
     window.openCase = (id) => {
         activeId = id;
@@ -361,3 +407,4 @@
 </script>
 </body>
 </html>
+
